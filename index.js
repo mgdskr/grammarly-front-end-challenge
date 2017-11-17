@@ -62,7 +62,8 @@ const createGraph = array => {
           const neighbors = getNeighborsIds(floorId, roomId)
 
           return {
-            floorNodeList: [...floorNodeList, node],
+            floorNodeList: {...floorNodeList,
+              ...{[nodeId]: node}},
             floorNeighbors: {
               ...floorNeighbors,
               ...{[nodeId]: neighbors},
@@ -71,10 +72,10 @@ const createGraph = array => {
           }
 
         },
-        {floorNodeList: [], floorNeighbors: {}})
+        {floorNodeList: {}, floorNeighbors: {}})
 
       return {
-        nodeList: [...nodeList, ...floorNodeList],
+        nodeList: {...nodeList, ...floorNodeList},
         neighborsHash: {...neighborsHash, ...floorNeighbors},
       }
 
@@ -93,11 +94,11 @@ const endNodeId = getNodeId(...endPoint)
 let problemSolved = false
 
 const startNode = {
-  ...nodeList.find(({nodeId}) => nodeId === startNodeId),
+  ...nodeList[startNodeId],
   parentNodeId: null,
   pathCost: 0,
 }
-const endNode = nodeList.find(({nodeId}) => nodeId === endNodeId)
+const endNode = nodeList[endNodeId]
 
 let frontier = [startNode]
 let exploredNodes = []
@@ -130,7 +131,7 @@ while (!problemSolved) {
   }
 
   const newNodes = newNodesIds.map(newNodeId => {
-    const newNode = nodeList.find(({nodeId}) => nodeId === newNodeId)
+    const newNode = nodeList[newNodeId]
     return {
       ...newNode,
       parentNodeId: nodeId,
