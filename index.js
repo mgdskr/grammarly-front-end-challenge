@@ -4,7 +4,8 @@ const sampleTimes = [
   [91, 50, 20],
 ]
 
-const getNodeIdForAnyBuilding = N => (floorId, roomId) => floorId * N + roomId
+const getNodeIdForAnyBuilding = N => (floorId, roomId) => floorId * (N + 1) +
+roomId
 const getNodeId = getNodeIdForAnyBuilding(sampleTimes.length - 1)
 
 const createGraph = building => {
@@ -89,29 +90,46 @@ const startNodeId = getNodeId(...startPoint)
 const endNodeId = getNodeId(...endPoint)
 
 let problemSolved = false
+
 const startNode = {
-  ...nodeList[startNodeId],
+  ...nodeList.find(({nodeId}) => nodeId === startNodeId),
   parentNodeId: null,
   pathCost: 0,
 }
+const endNode = nodeList.find(({nodeId}) => nodeId === endNodeId)
+
 let frontier = [startNode]
-let exploredNodesIds = [startNodeId]
+let exploredNodes = []
 
 while (!problemSolved) {
-  // debugger
-  const {nodeId, pathCost} = frontier.sort(
+  // console.log('frontier', frontier)
+  // console.log('explored', exploredNodes)
+  const currentNode = frontier.sort(
     ({pathCost: pathCostA}, {pathCost: pathCostB}) => pathCostA - pathCostB)[0]
+  const {nodeId, pathCost} = currentNode
+  // console.log('nodeId', nodeId)
+  // console.log('neighbors', neighborsHash[nodeId])
   const newNodesIds = neighborsHash[nodeId].filter(
-    newNodeId => !exploredNodesIds.includes(newNodeId))
+    newNodeId => !exploredNodes.map(({nodeId}) => nodeId).includes(newNodeId))
 
   if (newNodesIds.includes(endNodeId)) {
-      problemSolved = true
-      console.log('solved')
+    console.log('solved')
+    problemSolved = true
+    exploredNodes = [
+      ...exploredNodes,
+      currentNode,
+      {
+        ...endNode,
+        pathCost: pathCost + endNode.roomTime,
+        parentNodeId: nodeId,
+      }
+      ]
+    break
+
   }
 
   const newNodes = newNodesIds.map(newNodeId => {
-    const newNode = nodeList[newNodeId]
-
+    const newNode = nodeList.find(({nodeId}) => nodeId === newNodeId)
     return {
       ...newNode,
       parentNodeId: nodeId,
@@ -120,6 +138,13 @@ while (!problemSolved) {
   })
 
   frontier = [...frontier.filter(node => node.nodeId !== nodeId), ...newNodes]
-  exploredNodesIds = [...exploredNodesIds, ...newNodesIds]
+  exploredNodes = [...exploredNodes, currentNode]
 
 }
+
+// console.log(nodeList)
+
+console.log(exploredNodes)
+
+// console.log(neighborsHash)
+
