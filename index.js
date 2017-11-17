@@ -8,7 +8,8 @@ const getNodeIdForAnyBuilding = N => (floorId, roomId) => floorId * (N + 1) +
 roomId
 const getNodeId = getNodeIdForAnyBuilding(sampleTimes.length - 1)
 
-const createGraph = building => {
+const createGraph = array => {
+  const building = array.reverse()
   const N = building.length - 1
   const M = building[0].length - 1
 
@@ -83,7 +84,7 @@ const createGraph = building => {
 
 const {nodeList, neighborsHash} = createGraph(sampleTimes)
 
-const startPoint = [0, 1]
+const startPoint = [0, 0]
 const endPoint = [2, 1]
 
 const startNodeId = getNodeId(...startPoint)
@@ -148,3 +149,28 @@ console.log(exploredNodes)
 
 // console.log(neighborsHash)
 
+const backtraceRoute = exploredNodes => {
+  const lastNode = exploredNodes[exploredNodes.length - 1]
+  const steps = [lastNode.nodeId, lastNode.parentNodeId]
+  let currentParentId = lastNode.parentNodeId
+  let routeFound = false
+
+  while(!routeFound) {
+    const {parentNodeId} = exploredNodes.find(({nodeId}) => nodeId === currentParentId)
+    if (parentNodeId === null) {
+      routeFound = true
+      break
+    }
+    steps.push(parentNodeId)
+    currentParentId = parentNodeId
+  }
+
+  return steps.reverse()
+}
+
+const route = backtraceRoute(exploredNodes)
+
+const totalTime = exploredNodes[exploredNodes.length - 1].pathCost
+
+console.log(route)
+console.log(totalTime)
