@@ -4,12 +4,12 @@ const sampleTimes = [
   [91, 50, 20],
 ]
 
+const getNodeIdForAnyBuilding = N => (floorId, roomId) => floorId * N + roomId
+const getNodeId = getNodeIdForAnyBuilding(sampleTimes.length - 1)
+
 const createGraph = building => {
   const N = building.length - 1
   const M = building[0].length - 1
-
-  const getNodeIdForAnyBuilding = N => (floorId, roomId) => floorId * N + roomId
-  const getNodeId = getNodeIdForAnyBuilding(N)
 
   const getNeighborsIds = (floorId, roomId) => {
 
@@ -32,13 +32,11 @@ const createGraph = building => {
 
     const neighbors = [roomLeft, roomRight, roomUp, roomDown]
 
-    return neighbors
-    .filter(
+    return neighbors.filter(
       ({floorId, roomId}) => floorId >= 0 && floorId <= N &&
-      roomId >= 0 && roomId <= M)
-    .filter(({floorId, roomId}) => {
-      return building[floorId][roomId] > 0})
-    .map(({floorId, roomId}) => getNodeId(floorId, roomId))
+      roomId >= 0 && roomId <= M).filter(({floorId, roomId}) => {
+      return building[floorId][roomId] > 0
+    }).map(({floorId, roomId}) => getNodeId(floorId, roomId))
 
   }
 
@@ -63,8 +61,11 @@ const createGraph = building => {
 
           return {
             floorNodeList: [...floorNodeList, node],
-            floorNeighbors: Object.assign({}, floorNeighbors,
-              {[nodeId]: neighbors}),
+            floorNeighbors: {
+              ...floorNeighbors,
+              ...{[nodeId]: neighbors},
+
+            },
           }
 
         },
@@ -72,12 +73,53 @@ const createGraph = building => {
 
       return {
         nodeList: [...nodeList, ...floorNodeList],
-        neighborsHash: Object.assign({}, neighborsHash, floorNeighbors),
+        neighborsHash: {...neighborsHash, ...floorNeighbors},
       }
 
     }, {nodeList: [], neighborsHash: {}})
 
 }
 
-const graph = createGraph(sampleTimes)
-console.log(graph.neighborsHash)
+const {nodeList, neighborsHash} = createGraph(sampleTimes)
+
+const startPoint = [0, 1]
+const endPoint = [2, 1]
+
+const startNodeId = getNodeId(...startPoint)
+const endNodeId = getNodeId(...endPoint)
+
+let problemSolved = false
+const startNode = {
+  ...nodeList[startNodeId],
+  parentNodeId: null,
+  pathCost: 0,
+}
+let frontier = [startNode]
+let exploredNodesIds = [startNodeId]
+
+while (!problemSolved) {
+  // debugger
+  const {nodeId, pathCost} = frontier.sort(
+    ({pathCost: pathCostA}, {pathCost: pathCostB}) => pathCostA - pathCostB)[0]
+  const newNodesIds = neighborsHash[nodeId].filter(
+    newNodeId => !exploredNodesIds.includes(newNodeId))
+
+  if (newNodesIds.includes(endNodeId)) {
+      problemSolved = true
+      console.log('solved')
+  }
+
+  const newNodes = newNodesIds.map(newNodeId => {
+    const newNode = nodeList[newNodeId]
+
+    return {
+      ...newNode,
+      parentNodeId: nodeId,
+      pathCost: pathCost + newNode.roomTime,
+    }
+  })
+
+  frontier = [...frontier.filter(node => node.nodeId !== nodeId), ...newNodes]
+  exploredNodesIds = [...exploredNodesIds, ...newNodesIds]
+
+}
