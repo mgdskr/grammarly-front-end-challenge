@@ -4,12 +4,13 @@ const sampleTimes = [
   [91, 50, 20],
 ]
 
+const building = sampleTimes.reverse()
+
 const getNodeIdForAnyBuilding = N => (floorId, roomId) => floorId * (N + 1) +
 roomId
 const getNodeId = getNodeIdForAnyBuilding(sampleTimes.length - 1)
 
-const createGraph = array => {
-  const building = array.reverse()
+const createGraph = building => {
   const N = building.length - 1
   const M = building[0].length - 1
 
@@ -83,7 +84,7 @@ const createGraph = array => {
 
 }
 
-const {nodeList, neighborsHash} = createGraph(sampleTimes)
+const {nodeList, neighborsHash} = createGraph(building)
 
 const startPoint = [0, 0]
 const endPoint = [2, 1]
@@ -109,26 +110,23 @@ while (!problemSolved) {
   const currentNode = frontier.sort(
     ({pathCost: pathCostA}, {pathCost: pathCostB}) => pathCostA - pathCostB)[0]
   const {nodeId, pathCost} = currentNode
+
+  if (nodeId === endNodeId) {
+    console.log('solved')
+    problemSolved = true
+    exploredNodes = [
+      ...exploredNodes,
+      currentNode
+    ]
+    break
+
+  }
   // console.log('nodeId', nodeId)
   // console.log('neighbors', neighborsHash[nodeId])
   const newNodesIds = neighborsHash[nodeId].filter(
     newNodeId => !exploredNodes.map(({nodeId}) => nodeId).includes(newNodeId))
 
-  if (newNodesIds.includes(endNodeId)) {
-    console.log('solved')
-    problemSolved = true
-    exploredNodes = [
-      ...exploredNodes,
-      currentNode,
-      {
-        ...endNode,
-        pathCost: pathCost + endNode.roomTime,
-        parentNodeId: nodeId,
-      }
-      ]
-    break
 
-  }
 
   const newNodes = newNodesIds.map(newNodeId => {
     const newNode = nodeList[newNodeId]
@@ -175,3 +173,19 @@ const totalTime = exploredNodes[exploredNodes.length - 1].pathCost
 
 console.log(route)
 console.log(totalTime)
+
+// visualization
+//
+// const $canvas = document.querySelector('#canvas')
+// console.log($canvas)
+//
+// const ctx = $canvas.getContext('2d')
+//
+// const room = {width: 30, height: 50}
+//
+// //
+// // building.forEach(floor => {
+// //   floor.forEach(room => {})
+// // })
+//
+// console.table(nodeList)
