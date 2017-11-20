@@ -1,7 +1,7 @@
 const sampleTimes = [
-  [100, 210, 200],
-  [300, 0, 40],
-  [91, 50, 20],
+  [100, 5, 200],
+  [100, 0, 20],
+  [91, 100, 90],
 ]
 
 const building = sampleTimes.reverse()
@@ -87,7 +87,7 @@ const createGraph = building => {
 const {nodeList, neighborsHash} = createGraph(building)
 
 const startPoint = [0, 0]
-const endPoint = [2, 1]
+const endPoint = [2, 2]
 
 const startNodeId = getNodeId(...startPoint)
 const endNodeId = getNodeId(...endPoint)
@@ -123,8 +123,9 @@ while (!problemSolved) {
   }
   // console.log('nodeId', nodeId)
   // console.log('neighbors', neighborsHash[nodeId])
+  const exploredNodesIds = exploredNodes.map(({nodeId}) => nodeId)
   const newNodesIds = neighborsHash[nodeId].filter(
-    newNodeId => !exploredNodes.map(({nodeId}) => nodeId).includes(newNodeId))
+    newNodeId => !exploredNodesIds.includes(newNodeId))
 
 
 
@@ -137,14 +138,15 @@ while (!problemSolved) {
     }
   })
 
-  frontier = [...frontier.filter(node => node.nodeId !== nodeId), ...newNodes]
+  frontier = [...frontier.filter(node => node.nodeId !== nodeId && !exploredNodesIds.includes(nodeId)), ...newNodes]
   exploredNodes = [...exploredNodes, currentNode]
 
 }
 
 // console.log(nodeList)
 
-console.log(exploredNodes)
+// console.log(exploredNodes)
+console.log(frontier)
 
 // console.log(neighborsHash)
 
