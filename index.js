@@ -4,11 +4,14 @@ const sampleTimes = [
   [91, 100, 90],
 ]
 
+const startPoint = [0, 0]
+const endPoint = [2, 2]
+
 const building = sampleTimes.reverse()
 
 const getNodeIdForAnyBuilding = N => (floorId, roomId) => floorId * (N + 1) +
 roomId
-const getNodeId = getNodeIdForAnyBuilding(sampleTimes.length - 1)
+const getNodeId = getNodeIdForAnyBuilding(building.length - 1)
 
 const createGraph = building => {
   const N = building.length - 1
@@ -63,8 +66,10 @@ const createGraph = building => {
           const neighbors = getNeighborsIds(floorId, roomId)
 
           return {
-            floorNodeList: {...floorNodeList,
-              ...{[nodeId]: node}},
+            floorNodeList: {
+              ...floorNodeList,
+              ...{[nodeId]: node}
+            },
             floorNeighbors: {
               ...floorNeighbors,
               ...{[nodeId]: neighbors},
@@ -84,94 +89,86 @@ const createGraph = building => {
 
 }
 
-const {nodeList, neighborsHash} = createGraph(building)
-
-const startPoint = [0, 0]
-const endPoint = [2, 2]
-
-const startNodeId = getNodeId(...startPoint)
-const endNodeId = getNodeId(...endPoint)
-
-let problemSolved = false
-
-const startNode = {
-  ...nodeList[startNodeId],
-  parentNodeId: null,
-  pathCost: 0,
-}
-const endNode = nodeList[endNodeId]
-
-let frontier = [startNode]
-let exploredNodes = []
-
-while (!problemSolved) {
-  // console.log('frontier', frontier)
-  // console.log('explored', exploredNodes)
-  const currentNode = frontier.sort(
-    ({pathCost: pathCostA}, {pathCost: pathCostB}) => pathCostA - pathCostB)[0]
-  const {nodeId, pathCost} = currentNode
-
-  if (nodeId === endNodeId) {
-    console.log('solved')
-    problemSolved = true
-    exploredNodes = [
-      ...exploredNodes,
-      currentNode
-    ]
-    break
-
+const findSolution = (startPoint, endPoint, {nodeList, neighborsHash}) => {
+  const startNodeId = getNodeId(...startPoint)
+  const endNodeId = getNodeId(...endPoint)
+  const startNode = {
+    ...nodeList[startNodeId],
+    parentNodeId: null,
+    pathCost: 0,
   }
-  // console.log('nodeId', nodeId)
-  // console.log('neighbors', neighborsHash[nodeId])
-  const exploredNodesIds = exploredNodes.map(({nodeId}) => nodeId)
-  const newNodesIds = neighborsHash[nodeId].filter(
-    newNodeId => !exploredNodesIds.includes(newNodeId))
+  const endNode = nodeList[endNodeId]
 
+  let problemSolved = false
+  let frontier = [startNode]
+  let exploredNodes = []
 
+  while (!problemSolved) {
+    const currentNode = frontier.sort(
+      ({pathCost: pathCostA}, {pathCost: pathCostB}) => pathCostA -
+      pathCostB)[0]
+    const {nodeId, pathCost} = currentNode
 
-  const newNodes = newNodesIds.map(newNodeId => {
-    const newNode = nodeList[newNodeId]
-    return {
-      ...newNode,
-      parentNodeId: nodeId,
-      pathCost: pathCost + newNode.roomTime,
-    }
-  })
-
-  frontier = [...frontier.filter(node => node.nodeId !== nodeId && !exploredNodesIds.includes(nodeId)), ...newNodes]
-  exploredNodes = [...exploredNodes, currentNode]
-
-}
-
-// console.log(nodeList)
-
-// console.log(exploredNodes)
-console.log(frontier)
-
-// console.log(neighborsHash)
-
-const backtraceRoute = exploredNodes => {
-  const lastNode = exploredNodes[exploredNodes.length - 1]
-  const steps = [lastNode.nodeId, lastNode.parentNodeId]
-  let currentParentId = lastNode.parentNodeId
-  let routeFound = false
-
-  while(!routeFound) {
-    const {parentNodeId} = exploredNodes.find(({nodeId}) => nodeId === currentParentId)
-    if (parentNodeId === null) {
-      routeFound = true
+    if (nodeId === endNodeId) {
+      console.log('solved')
+      problemSolved = true
+      exploredNodes = [
+        ...exploredNodes,
+        currentNode,
+      ]
       break
+
     }
-    steps.push(parentNodeId)
-    currentParentId = parentNodeId
+
+    const exploredNodesIds = exploredNodes.map(({nodeId}) => nodeId)
+    const newNodesIds = neighborsHash[nodeId].filter(
+      newNodeId => !exploredNodesIds.includes(newNodeId))
+
+    const newNodes = newNodesIds.map(newNodeId => {
+      const newNode = nodeList[newNodeId]
+      return {
+        ...newNode,
+        parentNodeId: nodeId,
+        pathCost: pathCost + newNode.roomTime,
+      }
+    })
+
+    frontier = [
+      ...frontier.filter(
+        node => node.nodeId !== nodeId && !exploredNodesIds.includes(nodeId)),
+      ...newNodes]
+    exploredNodes = [...exploredNodes, currentNode]
+
   }
 
-  return steps.reverse()
+  const backtraceRoute = exploredNodes => {
+    const lastNode = exploredNodes[exploredNodes.length - 1]
+    const steps = [lastNode.nodeId, lastNode.parentNodeId]
+    let currentParentId = lastNode.parentNodeId
+    let routeFound = false
+
+    while (!routeFound) {
+      const {parentNodeId} = exploredNodes.find(
+        ({nodeId}) => nodeId === currentParentId)
+      if (parentNodeId === null) {
+        routeFound = true
+        break
+      }
+      steps.push(parentNodeId)
+      currentParentId = parentNodeId
+    }
+
+    return steps.reverse()
+  }
+
+  return {
+    route: backtraceRoute(exploredNodes),
+    totalTime: exploredNodes[exploredNodes.length - 1].pathCost,
+  }
+
 }
 
-const route = backtraceRoute(exploredNodes)
-
-const totalTime = exploredNodes[exploredNodes.length - 1].pathCost
+const {route, totalTime} = findSolution(startPoint, endPoint, createGraph(building))
 
 console.log(route)
 console.log(totalTime)
